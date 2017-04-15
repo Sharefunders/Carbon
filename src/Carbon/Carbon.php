@@ -17,6 +17,7 @@ use DatePeriod;
 use DateTime;
 use DateTimeZone;
 use InvalidArgumentException;
+use JsonSerializable;
 use Symfony\Component\Translation\Loader\ArrayLoader;
 use Symfony\Component\Translation\Translator;
 use Symfony\Component\Translation\TranslatorInterface;
@@ -50,7 +51,7 @@ use Symfony\Component\Translation\TranslatorInterface;
  * @property-read string $timezoneName
  * @property-read string $tzName
  */
-class Carbon extends DateTime
+class Carbon extends DateTime implements JsonSerializable
 {
     /**
      * The day constants.
@@ -77,6 +78,8 @@ class Carbon extends DateTime
         self::FRIDAY => 'Friday',
         self::SATURDAY => 'Saturday',
     );
+
+    protected static $toJsonFormat;
 
     /**
      * Terms used to detect if a time passed is a relative date.
@@ -1230,6 +1233,11 @@ class Carbon extends DateTime
     public function __toString()
     {
         return $this->format(static::$toStringFormat);
+    }
+
+    public function toSimpleDate()
+    {
+        return $this->format('Y-m');
     }
 
     /**
@@ -3366,5 +3374,24 @@ class Carbon extends DateTime
         }
 
         return $instance;
+    }
+
+    public static function setToJsonFormat($format)
+    {
+        static::$toJsonFormat = $format;
+    }
+
+    /**
+     * Specify data which should be serialized to JSON
+     * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
+     * @return mixed data which can be serialized by <b>json_encode</b>,
+     * which is a value of any type other than a resource.
+     * @since 5.4.0
+     */
+    public function jsonSerialize()
+    {
+        $jsonFormat = static::$toJsonFormat;
+
+        return $jsonFormat ? $this->format($jsonFormat) : $this;
     }
 }
